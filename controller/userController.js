@@ -2,7 +2,12 @@ const bcrypt = require("bcrypt");
 const saltRounds = 12;
 const User = require("../models/user.js");
 const jwt = require("jsonwebtoken");
-const { creatingNewUser, findOneUser, findOneUserByEmail, findOneUserByRegId } = require("../services/userServices");
+const {
+  creatingNewUser,
+  findOneUser,
+  findOneUserByEmailOrRegisterID,
+  findOneUserByRegId,
+} = require("../services/userServices");
 
 module.exports = {
   creatingSignUp: async (req, res) => {
@@ -13,7 +18,7 @@ module.exports = {
         email: req.body.email,
         registrationId: req.body.registrationId,
         //hashed password
-        password: await bcrypt.hash(req.body.password, saltRounds)
+        password: await bcrypt.hash(req.body.password, saltRounds),
       };
       const newUser = await creatingNewUser(user);
       return res.status(200).json({
@@ -30,21 +35,29 @@ module.exports = {
 
   creatingLogIn: async (req, res) => {
     try {
-      if ((req.body.email !== null  || req.body.registrationId !== null) && req.body.password !== null ) { //|| req.body.registrationId !== null
-        const pickUser = await findOneUserByEmail({
-          email: req.body.email
-        });
-        const registrationUser = await findOneUserByRegId({
-          registrationId: req.body.registrationId
-        })
-        if ((pickUser === null) || (registrationUser === null)) {
+      if (
+        (req.body.email !== null || req.body.registrationId !== null) &&
+        req.body.password !== null
+      ) {
+        //|| req.body.registrationId !== null
+        const query = {
+          $or: [
+            { email: req.body.email },
+            { registrationId: req.body.registrationId },
+          ],
+        };
+        const pickUser = await findOneUserByEmailOrRegisterID(query);
+        // const registrationUser = await findOneUserByRegId({
+        //   registrationId: req.body.registrationId
+        // })
+        if (!pickUser) {
           return res.send({
             status: "error",
             message: "incorect password or email/registrationId",
           });
         }
         //evaluate password
-        if (pickUser) {
+        // if (pickUser) {
           const passwordChecker = await bcrypt.compare(
             req.body.password,
             pickUser.password
@@ -61,7 +74,7 @@ module.exports = {
           const accessToken = jwt.sign(
             {
               user: {
-                _id: pickUser._id
+                _id: pickUser._id,
               },
             },
             process.env.KEY,
@@ -76,7 +89,7 @@ module.exports = {
             token: accessToken,
             name: `${pickUser.firstName} ${pickUser.lastName}`,
           });
-        }
+        // }
       }
       return res.json({
         status: "error",

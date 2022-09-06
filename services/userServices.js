@@ -4,8 +4,8 @@ module.exports.creatingNewUser = async (user) => {
     return await User.create(user)
 }
 
-module.exports.findOneUserByEmail = async (email) => {
-    return await User.findOne(email).lean()
+module.exports.findOneUserByEmailOrRegisterID = async (query) => {
+    return await User.findOne(query).lean()
 }
 
 module.exports.findOneUserByRegId = async (registrationId) => {

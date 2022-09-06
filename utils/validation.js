@@ -23,13 +23,13 @@ module.exports = {
 
     //LogIn
     loginValidation: joi.object({
-        email: joi.string().email({ tlds: { allow: false } }).required().messages({
+        email: joi.string().email({ tlds: { allow: false } }).messages({
             "string.empty": `email must contain value`,
             "string.base": `email should be a type of string`,
             "string.pattern.base": `Please check the format!`,
             "any.required": `email is a required field`
-        }),
-        registrationId: joi.number(),
+        }).allow("", null),
+        registrationId: joi.number().default(0).allow('', null),
         password: joi.string().regex(/[a-zA-Z0-9]{3,30}/).required()
     }),
 }
